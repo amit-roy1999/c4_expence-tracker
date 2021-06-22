@@ -19,7 +19,7 @@ class TransactionsController extends BaseController
 		$res = $transactionModel->asObject()->where('user_id', $data->user_id)
 			->select([
 				'id',
-				'transactions_fun', 'transactions_type', 'loand_person', 'amount', 'transactions_detail', 'created_at'
+				'transactions_fun', 'transactions_type', 'mode_of_transaction', 'loand_person', 'amount', 'transactions_detail', 'created_at'
 			])->findAll();
 		return $this->response->setJSON($res);
 	}
@@ -29,6 +29,7 @@ class TransactionsController extends BaseController
 	{
 		$loanModel = new \App\Models\LoanModel();
 		$data = $this->request->getJSON();
+		// var_dump($data);
 		$res = $loanModel->asObject()->where('user_id', $data->user_id)->findAll();
 		$stack = array();
 		foreach ($res as $lm) {
@@ -45,17 +46,30 @@ class TransactionsController extends BaseController
 		$transactionModel = new \App\Models\TransactionsModel();
 		$data = $this->request->getJSON();
 
-		if ($data->transactions_type == 'loan') {
-			$validation->setRules(
-				[
-					'user_id' => 'required|integer',
-					'transactions_fun' => 'required|alpha_numeric_space',
-					'transactions_type' => 'required|alpha_numeric_space',
-					'loand_person' => 'required|alpha_numeric_space',
-					'transactions_detail' => 'required|alpha_numeric_space',
-					'amount'     => 'required|integer',
-				]
-			);
+		if (isset($data->transactions_type)) {
+			if ($data->transactions_type == 'loan') {
+				$validation->setRules(
+					[
+						'user_id' => 'required|integer',
+						'transactions_fun' => 'required|alpha_numeric_space',
+						'transactions_type' => 'required|alpha_numeric_space',
+						'mode_of_transaction' => 'required|alpha_numeric_space',
+						'loand_person' => 'required|alpha_numeric_space',
+						'transactions_detail' => 'required|alpha_numeric_space',
+						'amount'     => 'required|integer',
+					]
+				);
+			} else {
+				$validation->setRules(
+					[
+						'user_id' => 'required|integer',
+						'transactions_fun' => 'required|alpha_numeric_space',
+						'transactions_type' => 'required|alpha_numeric_space',
+						'transactions_detail' => 'required|alpha_numeric_space',
+						'amount'     => 'required|integer',
+					]
+				);
+			}
 		} else {
 			$validation->setRules(
 				[
@@ -108,8 +122,23 @@ class TransactionsController extends BaseController
 					break;
 				case 'loan':
 					if ($data->transactions_fun == 'add') {
-						$cc = $cu->loan + $data->amount;
-						$res = $userModel->update($data->user_id, ['loan' => $cc]);
+
+						if ($data->mode_of_transaction == 'cash') {
+							if ($cu->cash >= $data->amount) {
+								$new_cash = $cu->cash - $data->amount;
+								$userModel->update($data->user_id, ['cash' => $new_cash]);
+							} else {
+								return $this->response->setJSON(['eer' => $cu->cash, 'msg' => 'you do not have enough cash to pay for this transaction.']);
+							}
+						}
+						if ($data->mode_of_transaction == 'bank') {
+							if ($cu->bank >= $data->amount) {
+								$new_bank = $cu->bank - $data->amount;
+								$userModel->update($data->user_id, ['bank' => $new_bank]);
+							} else {
+								return $this->response->setJSON(['eer' => $cu->bank, 'msg' => 'you do not have enough cash in your bank A/c to pay for this transaction.']);
+							}
+						}
 
 						$exis_loand_person = $loanModel->where('user_id', $data->user_id)
 							->where('loand_person', $data->loand_person)->first();
@@ -125,6 +154,8 @@ class TransactionsController extends BaseController
 							// var_dump($exis_loand_person);
 							$res = $loanModel->update($exis_loand_person['id'], $loan_data);
 							$transactionModel->insert($data);
+							$cc = $cu->loan + $data->amount;
+							$userModel->update($data->user_id, ['loan' => $cc]);
 							return $this->response->setJSON(['susses' => $res, 'msg' => 'loan added sussesfully on previosly existing person']);
 						}
 						$loan_data = [
@@ -133,28 +164,42 @@ class TransactionsController extends BaseController
 							'loand_person' => $data->loand_person, //not unique person name
 						];
 						$res = $loanModel->insert($loan_data);
+
 						$transactionModel->insert($data);
+						$cc = $cu->loan + $data->amount;
+						$userModel->update($data->user_id, ['loan' => $cc]);
 						return $this->response->setJSON(['susses' => $res, 'msg' => 'loan added sussesfully on new person']);
 						// $loanModel
 
 					}
 					if ($data->transactions_fun == 'sub') {
-
 						$exis_loand_person = $loanModel->where('user_id', $data->user_id)
 							->where('loand_person', $data->loand_person)->first();
+
 						// var_dump($exis_loand_person);
 						if ($exis_loand_person != null) {
 							if ($exis_loand_person['amount'] >= $data->amount) {
-								$cc = $cu->loan - $data->amount;
-								$userModel->update($data->user_id, ['loan' => $cc]);
+
+								if ($data->mode_of_transaction == 'cash') {
+
+									$new_cash = $cu->cash + $data->amount;
+									$userModel->update($data->user_id, ['cash' => $new_cash]);
+								}
+								if ($data->mode_of_transaction == 'bank') {
+
+									$new_bank = $cu->bank + $data->amount;
+									$userModel->update($data->user_id, ['bank' => $new_bank]);
+								}
 								$loan_data = [
-									'user_id' => $data->user_id,
+									// 'user_id' => $data->user_id,
 									'amount' =>  $exis_loand_person['amount'] - $data->amount,
-									'loand_person' => $data->loand_person, //unique person name
+									// 'loand_person' => $data->loand_person, //unique person name
 								];
 								// var_dump($exis_loand_person);
 								$res = $loanModel->update($exis_loand_person['id'], $loan_data);
 								$transactionModel->insert($data);
+								$cc = $cu->loan - $data->amount;
+								$userModel->update($data->user_id, ['loan' => $cc]);
 								return $this->response->setJSON(['susses' => $res, 'msg' => 'loan paid sussesfully on previosly existing person']);
 							}
 							return $this->response->setJSON(['msg' => 'you cannot take interest on lone']);
@@ -240,5 +285,16 @@ class TransactionsController extends BaseController
 		}
 		$err = $validation->getErrors();
 		return $this->response->setJSON(['error' => $err])->setStatusCode(400);
+	}
+	public function loand_persons_list()
+	{
+		$loanModel = new \App\Models\LoanModel();
+		$data = $this->request->getJSON();
+
+		if (isset($data->user_id)) {
+			$res = $loanModel->where('user_id', $data->user_id)->findAll();
+			return $this->response->setJSON($res)->setStatusCode(200);
+		}
+		return $this->response->setJSON(['err' => 'No user_id given form request.']);
 	}
 }

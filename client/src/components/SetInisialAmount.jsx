@@ -14,6 +14,14 @@ function SetInisialAmount() {
     ) {
       his.push("/login");
     }
+    (async () => {
+      const res = await axios.post("user/get-initial-amount", {
+        id: localStorage.getItem("user_id"),
+      });
+      if (res.data.cash != null || res.data.bank != null) {
+        his.push("/");
+      }
+    })();
     return () => {
       if (
         localStorage.getItem("api_token") == null ||

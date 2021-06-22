@@ -52,9 +52,11 @@ function Home() {
         <div className="home_card_blue">
           <p>Total Bank: {Data.bank}</p>
         </div>
-        <div className="home_card_red">
+
+        <Link to="/all-loand-person-details" className="home_card_red">
           <p>Total Loan: {Data.loan}</p>
-        </div>
+        </Link>
+
         <div className="home_card_green">
           <p>Total : {Data.total}</p>
         </div>

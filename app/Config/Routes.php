@@ -50,7 +50,11 @@ $routes->group('api', function ($routes) {
 		$routes->post('set-transaction', 'TransactionsController::set_transaction');
 		$routes->post('get-all-loand-person', 'TransactionsController::get_all_loand_person');
 		$routes->post('get-all-transaction', 'TransactionsController::get_all_transaction');
+
 		// $routes->post('insert-transaction', 'TransactionsController::insert_transaction');
+		$routes->post('loand-persons-list', 'TransactionsController::loand_persons_list');
+
+
 
 		$routes->get('/', function () {
 			$time =  new Time('now', 'Asia/Kolkata', 'en_US');

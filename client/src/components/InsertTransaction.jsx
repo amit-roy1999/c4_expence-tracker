@@ -38,6 +38,9 @@ function InsertTransaction() {
   const [TransactionDetails, setTransactionDetails] = useState("");
   const [TransactionDetailsErr, setTransactionDetailsErr] = useState("");
 
+  const [ModeOfTransaction, setModeOfTransaction] = useState("cash");
+  const [ModeOfTransactionErr, setModeOfTransactionErr] = useState("");
+
   const submitTransactionForm = async () => {
     try {
       const res = await axios.post("user/set-transaction", {
@@ -46,6 +49,7 @@ function InsertTransaction() {
         transactions_type: TransactionType,
         loand_person: LoanedPerson,
         transactions_detail: TransactionDetails,
+        mode_of_transaction: ModeOfTransaction,
         amount: Amount,
       });
       if (res.data.error != null) {
@@ -54,6 +58,7 @@ function InsertTransaction() {
         setTransactionTypeErr(res.data.error.transactions_type);
         setTransactionDetailsErr(res.data.error.transactions_detail);
         setLoanedPersonErr(res.data.error.loand_person);
+        setModeOfTransactionErr(res.data.error.mode_of_transaction);
       }
       // console.log(res.data);
       if (res.data.susses != null) {
@@ -95,7 +100,7 @@ function InsertTransaction() {
           user_id: localStorage.getItem("user_id"),
         });
         setTransactionType(value);
-        // console.log(AllLoandPerson.data);
+        console.log(AllLoandPerson.data);
         setAllPreviosLoanedPerson(AllLoandPerson.data);
         if (NewInputLoanShow) {
           setNewInputLoanShow(!NewInputLoanShow);
@@ -145,7 +150,7 @@ function InsertTransaction() {
             }}
             className="form_input"
           >
-            <option selected>cash</option>
+            <option>cash</option>
             <option>bank</option>
             <option>loan</option>
             <option>new loan</option>
@@ -157,6 +162,19 @@ function InsertTransaction() {
         {InputLoanShow ? (
           <div>
             <div className="mb-4">
+              <label className="form_label">Mode Of Transaction</label>
+              <select
+                onChange={(e) => {
+                  setModeOfTransaction(e.target.value);
+                }}
+                className="form_input"
+              >
+                <option>cash</option>
+                <option>bank</option>
+              </select>
+              <p className="form_input_err">{ModeOfTransactionErr}</p>
+            </div>
+            <div className="mb-4">
               <label className="form_label">Loand Person</label>
               <select
                 onChange={(e) => {
@@ -165,7 +183,7 @@ function InsertTransaction() {
                 }}
                 className="form_input"
               >
-                <option selected></option>
+                <option secleted></option>
                 {AllPreviosLoanedPerson.map((myList) => (
                   <option key={myList}>{myList}</option>
                 ))}
@@ -176,18 +194,33 @@ function InsertTransaction() {
         ) : null}
 
         {NewInputLoanShow ? (
-          <div className="mb-4">
-            <label className="form_label">New Loand Person</label>
-            <input
-              className="form_input"
-              type="text"
-              placeholder="New Loand Person"
-              onChange={(e) => {
-                setLoanedPerson(e.target.value);
-                // console.log(e.target.value);
-              }}
-            ></input>
-            <p className="form_input_err">{LoanedPersonErr}</p>
+          <div>
+            <div className="mb-4">
+              <label className="form_label">Mode Of Transaction</label>
+              <select
+                onChange={(e) => {
+                  setModeOfTransaction(e.target.value);
+                }}
+                className="form_input"
+              >
+                <option>cash</option>
+                <option>bank</option>
+              </select>
+              <p className="form_input_err">{ModeOfTransactionErr}</p>
+            </div>
+            <div className="mb-4">
+              <label className="form_label">New Loand Person</label>
+              <input
+                className="form_input"
+                type="text"
+                placeholder="New Loand Person"
+                onChange={(e) => {
+                  setLoanedPerson(e.target.value);
+                  // console.log(e.target.value);
+                }}
+              ></input>
+              <p className="form_input_err">{LoanedPersonErr}</p>
+            </div>
           </div>
         ) : null}
 

@@ -117,6 +117,9 @@ export default function ListComponent() {
                       Details
                     </th>
                     <th scope="col" className="table_hade">
+                      Mode of transaction
+                    </th>
+                    <th scope="col" className="table_hade">
                       Loand Person
                     </th>
                   </tr>
@@ -146,6 +149,11 @@ export default function ListComponent() {
                           <td className="table_data_bg">
                             <span className="table_text_bg">
                               {data.transactions_detail}
+                            </span>
+                          </td>
+                          <td className="table_data_bg">
+                            <span className="table_text_bg">
+                              {data.mode_of_transaction}
                             </span>
                           </td>
                           <td className="table_data_bg">

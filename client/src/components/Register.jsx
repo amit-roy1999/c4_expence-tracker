@@ -51,7 +51,7 @@ function Register() {
       if (res.data.api_token != null && res.data.id != null) {
         localStorage.api_token = res.data.api_token;
         localStorage.user_id = res.data.id;
-        his.push("/");
+        his.push("/set-inisial-amount");
       }
     } catch (error) {
       console.log(error);
